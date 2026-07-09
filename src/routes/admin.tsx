@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { LogOut, Plus, Save, Trash2, ExternalLink, ShieldCheck, ArrowLeft } from "lucide-react";
 import { isAuthed, login, logout } from "@/lib/auth";
 import { loadClasses, saveClasses, slugify, type ClassData, type Subject } from "@/lib/subjects-store";
-import logo from "@/assets/nxt-rank-logo.jpg.asset.json";
+const logo = { url: "/nxtranklogo.png" };
 
 export const Route = createFileRoute("/admin")({
   component: Admin,
@@ -76,15 +76,20 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 }
 
 function Panel({ onLogout }: { onLogout: () => void }) {
-  const [classes, setClasses] = useState<ClassData[]>(() => loadClasses());
+  const [classes, setClasses] = useState<ClassData[]>([]);
+  
+  useEffect(() => {
+    loadClasses().then(setClasses);
+  }, []);
   const [activeClass, setActiveClass] = useState(10);
   const [savedFlash, setSavedFlash] = useState(false);
 
-  const current = classes.find((c) => c.classNum === activeClass)!;
+  const current = classes.find((c) => c.classNum === activeClass);
+  if (!current) return <div className="p-8">Loading classes...</div>;
 
-  function update(next: ClassData[]) {
+  async function update(next: ClassData[]) {
     setClasses(next);
-    saveClasses(next);
+    await saveClasses({ data: next });
     setSavedFlash(true);
     setTimeout(() => setSavedFlash(false), 1500);
   }

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Compass, HeartHandshake, ShieldCheck, Sparkles } from "lucide-react";
-import logo from "@/assets/nxt-rank-logo.jpg.asset.json";
+const logo = { url: "/nxtranklogo.png" };
 
 export const Route = createFileRoute("/about")({
   component: About,

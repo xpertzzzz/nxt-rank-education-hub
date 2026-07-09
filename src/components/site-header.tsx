@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import logo from "@/assets/nxt-rank-logo.jpg.asset.json";
+const logo = { url: "/nxtranklogo.png" };
 
 const nav = [
   { to: "/", label: "Home" },

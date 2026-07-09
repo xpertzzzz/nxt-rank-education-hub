@@ -24,14 +24,7 @@ function Downloads() {
   const [activeClass, setActiveClass] = useState(10);
 
   useEffect(() => {
-    const refresh = () => setClasses(loadClasses());
-    refresh();
-    window.addEventListener("nxt-rank:classes-updated", refresh);
-    window.addEventListener("storage", refresh);
-    return () => {
-      window.removeEventListener("nxt-rank:classes-updated", refresh);
-      window.removeEventListener("storage", refresh);
-    };
+    loadClasses().then(setClasses);
   }, []);
 
   const current = classes.find((c) => c.classNum === activeClass);

@@ -1,3 +1,4 @@
+import { createServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { Play } from "lucide-react";
 
@@ -6,25 +7,37 @@ type Video = { id: string; title: string; thumbnail: string; published: string }
 const CHANNEL_HANDLE = "nxt-rank";
 const CHANNEL_URL = `https://www.youtube.com/@${CHANNEL_HANDLE}`;
 
-async function fetchLatestVideos(): Promise<Video[]> {
-  // Resolve channel ID from the channel page HTML, then read the public RSS feed.
-  const pageRes = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(CHANNEL_URL)}`);
-  const html = await pageRes.text();
-  const m = html.match(/"channelId":"(UC[\w-]{20,})"/) || html.match(/channel\/(UC[\w-]{20,})/);
-  if (!m) throw new Error("no channel id");
-  const channelId = m[1];
-  const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
-  const feedRes = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`);
-  const xml = await feedRes.text();
-  const doc = new DOMParser().parseFromString(xml, "text/xml");
-  const entries = Array.from(doc.getElementsByTagName("entry")).slice(0, 4);
-  return entries.map((e) => {
-    const id = e.getElementsByTagName("yt:videoId")[0]?.textContent || "";
-    const title = e.getElementsByTagName("title")[0]?.textContent || "";
-    const published = e.getElementsByTagName("published")[0]?.textContent || "";
-    return { id, title, published, thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg` };
-  });
-}
+const fetchLatestVideos = createServerFn({ method: "GET" }).handler(async (): Promise<Video[]> => {
+  try {
+    const pageRes = await fetch(`https://www.youtube.com/@${CHANNEL_HANDLE}`);
+    const html = await pageRes.text();
+    const m = html.match(/"channelId":"(UC[\w-]{20,})"/) || html.match(/channel\/(UC[\w-]{20,})/);
+    if (!m) throw new Error("no channel id");
+    const channelId = m[1];
+    
+    const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+    const feedRes = await fetch(feedUrl);
+    const xml = await feedRes.text();
+    
+    // We parse XML manually via regex because DOMParser isn't available in Node
+    const entries = xml.match(/<entry>[\s\S]*?<\/entry>/g) || [];
+    return entries.slice(0, 4).map((e) => {
+      const idMatch = e.match(/<yt:videoId>(.*?)<\/yt:videoId>/);
+      const titleMatch = e.match(/<title>(.*?)<\/title>/);
+      const pubMatch = e.match(/<published>(.*?)<\/published>/);
+      const id = idMatch ? idMatch[1] : "";
+      return {
+        id,
+        title: titleMatch ? titleMatch[1].replace(/&amp;/g, "&") : "",
+        published: pubMatch ? pubMatch[1] : "",
+        thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+      };
+    });
+  } catch (err) {
+    console.error("Failed to fetch YouTube videos", err);
+    return [];
+  }
+});
 
 export function YoutubeLatest() {
   const [videos, setVideos] = useState<Video[] | null>(null);
@@ -33,7 +46,12 @@ export function YoutubeLatest() {
   useEffect(() => {
     let cancelled = false;
     fetchLatestVideos()
-      .then((v) => !cancelled && setVideos(v))
+      .then((v) => {
+        if (!cancelled) {
+          if (!v || v.length === 0) setError(true);
+          else setVideos(v);
+        }
+      })
       .catch(() => !cancelled && setError(true));
     return () => {
       cancelled = true;

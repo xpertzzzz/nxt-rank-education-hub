@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import logo from "@/assets/nxt-rank-logo.jpg.asset.json";
+const logo = { url: "/nxtranklogo.png" };
 
 export function SiteFooter() {
   return (
