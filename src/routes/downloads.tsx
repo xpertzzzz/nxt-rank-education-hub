@@ -7,20 +7,6 @@ import { loadClasses, type ClassData } from "@/lib/subjects-store";
 
 export const Route = createFileRoute("/downloads")({
   component: Downloads,
-  head: () => ({
-    meta: [
-      { title: "PDF Downloads — NXT Rank" },
-      {
-        name: "description",
-        content:
-          "Download chapter-wise NXT Rank study material for Class 1–12. Class 10 material available now.",
-      },
-      { property: "og:title", content: "PDF Downloads — NXT Rank" },
-      { property: "og:description", content: "Chapter-wise study material for Class 1–12." },
-      { property: "og:url", content: "/downloads" },
-    ],
-    links: [{ rel: "canonical", href: "/downloads" }],
-  }),
 });
 
 function Downloads() {

@@ -5,20 +5,6 @@ import { GraduationCap } from "lucide-react";
 
 export const Route = createFileRoute("/faculty")({
   component: Faculty,
-  head: () => ({
-    meta: [
-      { title: "Faculty — NXT Rank" },
-      {
-        name: "description",
-        content:
-          "Meet the NXT Rank faculty — subject experts dedicated to helping students achieve their next rank.",
-      },
-      { property: "og:title", content: "Faculty — NXT Rank" },
-      { property: "og:description", content: "Meet the mentors behind NXT Rank." },
-      { property: "og:url", content: "/faculty" },
-    ],
-    links: [{ rel: "canonical", href: "/faculty" }],
-  }),
 });
 
 const faculty = [

@@ -1,4 +1,3 @@
-import { createServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { Play } from "lucide-react";
 
@@ -6,20 +5,28 @@ type Video = { id: string; title: string; thumbnail: string; published: string }
 
 const CHANNEL_HANDLE = "nxt-rank";
 const CHANNEL_URL = `https://www.youtube.com/@${CHANNEL_HANDLE}`;
+// YouTube RSS feeds are publicly accessible and CORS-friendly via allorigins proxy
+const FEED_PROXY = (channelId: string) =>
+  `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`)}`;
 
-const fetchLatestVideos = createServerFn({ method: "GET" }).handler(async (): Promise<Video[]> => {
+async function fetchLatestVideos(): Promise<Video[]> {
   try {
-    const pageRes = await fetch(`https://www.youtube.com/@${CHANNEL_HANDLE}`);
-    const html = await pageRes.text();
-    const m = html.match(/"channelId":"(UC[\w-]{20,})"/) || html.match(/channel\/(UC[\w-]{20,})/);
+    // Step 1: get the channel ID from the YouTube page via allorigins proxy
+    const pageRes = await fetch(
+      `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.youtube.com/@${CHANNEL_HANDLE}`)}`,
+    );
+    const pageJson = (await pageRes.json()) as { contents: string };
+    const html = pageJson.contents ?? "";
+    const m =
+      html.match(/"channelId":"(UC[\w-]{20,})"/) || html.match(/channel\/(UC[\w-]{20,})/);
     if (!m) throw new Error("no channel id");
     const channelId = m[1];
 
-    const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
-    const feedRes = await fetch(feedUrl);
-    const xml = await feedRes.text();
+    // Step 2: fetch the RSS feed
+    const feedRes = await fetch(FEED_PROXY(channelId));
+    const feedJson = (await feedRes.json()) as { contents: string };
+    const xml = feedJson.contents ?? "";
 
-    // We parse XML manually via regex because DOMParser isn't available in Node
     const entries = xml.match(/<entry>[\s\S]*?<\/entry>/g) || [];
     return entries.slice(0, 4).map((e) => {
       const idMatch = e.match(/<yt:videoId>(.*?)<\/yt:videoId>/);
@@ -37,7 +44,7 @@ const fetchLatestVideos = createServerFn({ method: "GET" }).handler(async (): Pr
     console.error("Failed to fetch YouTube videos", err);
     return [];
   }
-});
+}
 
 export function YoutubeLatest() {
   const [videos, setVideos] = useState<Video[] | null>(null);

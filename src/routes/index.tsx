@@ -15,30 +15,6 @@ const logo = { url: "/nxtranklogo.png" };
 
 export const Route = createFileRoute("/")({
   component: Home,
-  head: () => ({
-    meta: [
-      { title: "NXT Rank — Premium Academic Coaching" },
-      {
-        name: "description",
-        content:
-          "Guiding students to the next rank. Expert faculty, curated notes, and PDF study material for Class 1–12.",
-      },
-      {
-        name: "keywords",
-        content:
-          "NXT Rank, Academic Coaching, Study Material, Class 1-12, PDF Notes, Pruthwiraj Behera",
-      },
-      { name: "author", content: "NXT Rank Institute" },
-      { property: "og:title", content: "NXT Rank — Premium Academic Coaching" },
-      {
-        property: "og:description",
-        content:
-          "Guiding students to the next rank. Expert faculty, curated notes, and PDF study material for Class 1–12.",
-      },
-      { property: "og:type", content: "website" },
-    ],
-    links: [{ rel: "canonical", href: "/" }],
-  }),
 });
 
 function Home() {

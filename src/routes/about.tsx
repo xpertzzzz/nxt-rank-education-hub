@@ -6,23 +6,6 @@ const logo = { url: "/nxtranklogo.png" };
 
 export const Route = createFileRoute("/about")({
   component: About,
-  head: () => ({
-    meta: [
-      { title: "About — NXT Rank" },
-      {
-        name: "description",
-        content:
-          "NXT Rank, founded by Pruthwiraj Behera, is a premium coaching institute focused on disciplined mentorship and result-driven learning for Class 1–12.",
-      },
-      { property: "og:title", content: "About — NXT Rank" },
-      {
-        property: "og:description",
-        content: "Founded by Pruthwiraj Behera. Discipline, clarity, and results.",
-      },
-      { property: "og:url", content: "/about" },
-    ],
-    links: [{ rel: "canonical", href: "/about" }],
-  }),
 });
 
 function About() {

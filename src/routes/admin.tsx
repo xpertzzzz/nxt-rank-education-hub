@@ -13,13 +13,6 @@ const logo = { url: "/nxtranklogo.png" };
 
 export const Route = createFileRoute("/admin")({
   component: Admin,
-  head: () => ({
-    meta: [
-      { title: "Admin — NXT Rank" },
-      { name: "description", content: "NXT Rank admin panel." },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
-  }),
 });
 
 function Admin() {
@@ -386,8 +379,7 @@ function AddSubjectForm({ onAdd }: { onAdd: (name: string, url: string) => void 
         </button>
       </div>
       <p className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-        <Save className="h-3 w-3" /> Changes are saved automatically to this browser and appear live
-        on the site.
+        <Save className="h-3 w-3" /> Changes are saved automatically and appear live on the site.
       </p>
     </form>
   );
