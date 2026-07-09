@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Lock } from "lucide-react";
 const logo = { url: "/nxtranklogo.png" };
 
 const nav = [
@@ -46,13 +46,24 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="rounded-full border border-border p-2 md:hidden"
-          aria-label="Toggle menu"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <a
+            href="https://nxtrank.vercel.app/admin"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Admin"
+            className="rounded-full p-2 text-muted-foreground/50 transition hover:text-muted-foreground"
+          >
+            <Lock className="h-4 w-4" />
+          </a>
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="rounded-full border border-border p-2 md:hidden"
+            aria-label="Toggle menu"
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
       {open && (
         <div className="border-t border-border md:hidden">
