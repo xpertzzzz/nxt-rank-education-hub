@@ -42,7 +42,12 @@
   --shadow-soft: 0 8px 30px -8px color-mix(in oklab, var(--primary) 15%, transparent);
   --shadow-gold: 0 10px 40px -12px color-mix(in oklab, var(--gold) 40%, transparent);
 
-  --gradient-hero: linear-gradient(135deg, oklch(0.98 0.02 250) 0%, oklch(0.96 0.04 240) 50%, oklch(0.99 0.03 60) 100%);
+  --gradient-hero: linear-gradient(
+    135deg,
+    oklch(0.98 0.02 250) 0%,
+    oklch(0.96 0.04 240) 50%,
+    oklch(0.99 0.03 60) 100%
+  );
   --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-glow));
   --gradient-gold: linear-gradient(135deg, oklch(0.78 0.13 75), oklch(0.88 0.11 90));
 }
@@ -100,7 +105,10 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }

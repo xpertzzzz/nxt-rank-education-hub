@@ -10,7 +10,11 @@ export const Route = createFileRoute("/downloads")({
   head: () => ({
     meta: [
       { title: "PDF Downloads — NXT Rank" },
-      { name: "description", content: "Download chapter-wise NXT Rank study material for Class 1–12. Class 10 material available now." },
+      {
+        name: "description",
+        content:
+          "Download chapter-wise NXT Rank study material for Class 1–12. Class 10 material available now.",
+      },
       { property: "og:title", content: "PDF Downloads — NXT Rank" },
       { property: "og:description", content: "Chapter-wise study material for Class 1–12." },
       { property: "og:url", content: "/downloads" },
@@ -36,8 +40,12 @@ function Downloads() {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10" style={{ background: "var(--gradient-hero)" }} />
         <div className="mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 lg:px-8 lg:py-20">
-          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-gold">Study material</span>
-          <h1 className="mt-3 font-display text-4xl font-bold text-primary sm:text-5xl">PDF Downloads</h1>
+          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-gold">
+            Study material
+          </span>
+          <h1 className="mt-3 font-display text-4xl font-bold text-primary sm:text-5xl">
+            PDF Downloads
+          </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground">
             Choose your class and download chapter-wise notes prepared by NXT Rank faculty.
           </p>
@@ -46,7 +54,9 @@ function Downloads() {
 
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-3xl border border-border bg-card p-4 shadow-soft sm:p-6">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Select a class</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Select a class
+          </div>
           <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-12">
             {classes.map((c) => {
               const active = c.classNum === activeClass;
@@ -60,15 +70,17 @@ function Downloads() {
                     active
                       ? "bg-primary text-primary-foreground shadow-elegant"
                       : enabled
-                      ? "bg-secondary text-foreground hover:bg-accent"
-                      : "cursor-not-allowed bg-muted/40 text-muted-foreground/50"
+                        ? "bg-secondary text-foreground hover:bg-accent"
+                        : "cursor-not-allowed bg-muted/40 text-muted-foreground/50"
                   }`}
                 >
                   <div className="font-display text-lg font-bold">{c.classNum}</div>
                   <div className="mt-0.5 text-[10px] uppercase tracking-wider">Class</div>
                   {!enabled && <Lock className="absolute right-1.5 top-1.5 h-3 w-3" />}
                   {enabled && !active && (
-                    <span className="absolute -top-1.5 right-1.5 rounded-full bg-gold px-1.5 text-[9px] font-bold text-gold-foreground">NEW</span>
+                    <span className="absolute -top-1.5 right-1.5 rounded-full bg-gold px-1.5 text-[9px] font-bold text-gold-foreground">
+                      NEW
+                    </span>
                   )}
                 </button>
               );
@@ -82,13 +94,17 @@ function Downloads() {
           <div className="rounded-3xl border border-dashed border-border bg-secondary/30 p-14 text-center">
             <Lock className="mx-auto h-8 w-8 text-muted-foreground" />
             <h2 className="mt-4 font-display text-2xl font-bold text-primary">Coming soon</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Study material for this class will be published shortly.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Study material for this class will be published shortly.
+            </p>
           </div>
         ) : current ? (
           <>
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
               <div className="min-w-0">
-                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Available now</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">
+                  Available now
+                </span>
                 <h2 className="mt-1 font-display text-3xl font-bold text-primary sm:text-4xl">
                   {current.label} Subjects
                 </h2>
@@ -102,15 +118,24 @@ function Downloads() {
               {current.subjects.map((s) => {
                 const hasLink = Boolean(s.url);
                 return (
-                  <div key={s.id} className="group flex flex-col rounded-2xl border border-border bg-card p-6 shadow-soft transition hover:-translate-y-1 hover:shadow-elegant">
+                  <div
+                    key={s.id}
+                    className="group flex flex-col rounded-2xl border border-border bg-card p-6 shadow-soft transition hover:-translate-y-1 hover:shadow-elegant"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                         <FileText className="h-5 w-5" />
                       </div>
-                      <span className="rounded-full bg-secondary px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">PDF</span>
+                      <span className="rounded-full bg-secondary px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        PDF
+                      </span>
                     </div>
-                    <h3 className="mt-5 font-display text-lg font-bold text-foreground">{s.name}</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">Chapter-wise notes & practice</p>
+                    <h3 className="mt-5 font-display text-lg font-bold text-foreground">
+                      {s.name}
+                    </h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Chapter-wise notes & practice
+                    </p>
                     <div className="mt-6">
                       {hasLink ? (
                         <a

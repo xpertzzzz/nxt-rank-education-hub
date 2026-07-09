@@ -15,28 +15,30 @@ export const defaultClasses: ClassData[] = Array.from({ length: 12 }, (_, i) => 
   };
 });
 
-export const loadClasses = createServerFn({ method: "GET" }).handler(async (): Promise<ClassData[]> => {
-  try {
-    const dbClasses = await sql`SELECT * FROM classes ORDER BY class_num ASC`;
-    const dbSubjects = await sql`SELECT * FROM subjects`;
-    
-    if (dbClasses.length === 0) {
+export const loadClasses = createServerFn({ method: "GET" }).handler(
+  async (): Promise<ClassData[]> => {
+    try {
+      const dbClasses = await sql`SELECT * FROM classes ORDER BY class_num ASC`;
+      const dbSubjects = await sql`SELECT * FROM subjects`;
+
+      if (dbClasses.length === 0) {
+        return defaultClasses;
+      }
+
+      return dbClasses.map((c) => ({
+        classNum: c.class_num,
+        label: c.label,
+        enabled: c.enabled,
+        subjects: dbSubjects
+          .filter((s) => s.class_num === c.class_num)
+          .map((s) => ({ id: s.id, name: s.name, url: s.url })),
+      }));
+    } catch (err) {
+      console.error("DB error loading classes", err);
       return defaultClasses;
     }
-
-    return dbClasses.map((c) => ({
-      classNum: c.class_num,
-      label: c.label,
-      enabled: c.enabled,
-      subjects: dbSubjects
-        .filter((s) => s.class_num === c.class_num)
-        .map((s) => ({ id: s.id, name: s.name, url: s.url }))
-    }));
-  } catch (err) {
-    console.error("DB error loading classes", err);
-    return defaultClasses;
-  }
-});
+  },
+);
 
 export const saveClasses = createServerFn({ method: "POST" })
   .validator((d: ClassData[]) => d)
@@ -50,9 +52,9 @@ export const saveClasses = createServerFn({ method: "POST" })
           SET label = EXCLUDED.label, enabled = EXCLUDED.enabled
         `;
       }
-      
+
       await tx`DELETE FROM subjects`;
-      
+
       for (const c of data) {
         for (const s of c.subjects) {
           await tx`
@@ -66,5 +68,11 @@ export const saveClasses = createServerFn({ method: "POST" })
   });
 
 export function slugify(s: string) {
-  return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `subject-${Date.now()}`;
+  return (
+    s
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || `subject-${Date.now()}`
+  );
 }

@@ -1,5 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, BookOpen, Download, GraduationCap, Sparkles, Trophy, Users } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  Download,
+  GraduationCap,
+  Sparkles,
+  Trophy,
+  Users,
+} from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { YoutubeLatest } from "@/components/youtube-latest";
@@ -10,11 +18,23 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "NXT Rank — Premium Academic Coaching" },
-      { name: "description", content: "Guiding students to the next rank. Expert faculty, curated notes, and PDF study material for Class 1–12." },
-      { name: "keywords", content: "NXT Rank, Academic Coaching, Study Material, Class 1-12, PDF Notes, Pruthwiraj Behera" },
+      {
+        name: "description",
+        content:
+          "Guiding students to the next rank. Expert faculty, curated notes, and PDF study material for Class 1–12.",
+      },
+      {
+        name: "keywords",
+        content:
+          "NXT Rank, Academic Coaching, Study Material, Class 1-12, PDF Notes, Pruthwiraj Behera",
+      },
       { name: "author", content: "NXT Rank Institute" },
       { property: "og:title", content: "NXT Rank — Premium Academic Coaching" },
-      { property: "og:description", content: "Guiding students to the next rank. Expert faculty, curated notes, and PDF study material for Class 1–12." },
+      {
+        property: "og:description",
+        content:
+          "Guiding students to the next rank. Expert faculty, curated notes, and PDF study material for Class 1–12.",
+      },
       { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "/" }],
@@ -43,7 +63,10 @@ function Home() {
               <span className="text-gradient-gold">Reach the next rank.</span>
             </h1>
             <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
-              NXT Rank is a modern coaching institute founded by <strong className="text-foreground">Pruthwiraj Behera</strong>, blending disciplined mentorship with clear, curated study material — engineered to help every student find their winning rhythm.
+              NXT Rank is a modern coaching institute founded by{" "}
+              <strong className="text-foreground">Pruthwiraj Behera</strong>, blending disciplined
+              mentorship with clear, curated study material — engineered to help every student find
+              their winning rhythm.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
@@ -69,7 +92,9 @@ function Home() {
                 { k: "95%", v: "Pass with distinction" },
               ].map((s) => (
                 <div key={s.v}>
-                  <dt className="font-display text-2xl font-bold text-primary sm:text-3xl">{s.k}</dt>
+                  <dt className="font-display text-2xl font-bold text-primary sm:text-3xl">
+                    {s.k}
+                  </dt>
                   <dd className="mt-1 text-xs text-muted-foreground sm:text-sm">{s.v}</dd>
                 </div>
               ))}
@@ -80,10 +105,18 @@ function Home() {
             <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-primary/10 to-gold/20 blur-2xl" />
             <div className="relative rounded-[2rem] border border-border bg-card p-8 shadow-elegant sm:p-10">
               <div className="flex items-center gap-4">
-                <img src={logo.url} alt="NXT Rank" className="h-16 w-16 rounded-full ring-2 ring-gold/40" />
+                <img
+                  src={logo.url}
+                  alt="NXT Rank"
+                  className="h-16 w-16 rounded-full ring-2 ring-gold/40"
+                />
                 <div>
-                  <div className="font-display text-xl font-bold text-primary">NXT Rank Institute</div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Est. by Pruthwiraj Behera</div>
+                  <div className="font-display text-xl font-bold text-primary">
+                    NXT Rank Institute
+                  </div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    Est. by Pruthwiraj Behera
+                  </div>
                 </div>
               </div>
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -93,7 +126,10 @@ function Home() {
                   { icon: Trophy, t: "Rank focus", d: "Result-driven." },
                   { icon: GraduationCap, t: "1–12 support", d: "Full journey." },
                 ].map((f) => (
-                  <div key={f.t} className="rounded-2xl border border-border/70 bg-secondary/40 p-4">
+                  <div
+                    key={f.t}
+                    className="rounded-2xl border border-border/70 bg-secondary/40 p-4"
+                  >
                     <f.icon className="h-5 w-5 text-gold" />
                     <div className="mt-3 text-sm font-semibold text-foreground">{f.t}</div>
                     <div className="text-xs text-muted-foreground">{f.d}</div>
@@ -108,18 +144,32 @@ function Home() {
       {/* Why us */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="max-w-2xl">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Why NXT Rank</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">
+            Why NXT Rank
+          </span>
           <h2 className="mt-2 font-display text-3xl font-bold text-primary sm:text-4xl">
             A calm, premium learning environment — engineered for outcomes.
           </h2>
         </div>
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           {[
-            { t: "Concept-first teaching", d: "Every topic is broken into the smallest teachable idea — no memorising, only understanding." },
-            { t: "Personalised mentorship", d: "Small batches so each student gets attention, targeted doubt-clearing and weekly progress checks." },
-            { t: "Downloadable material", d: "Chapter-wise, exam-oriented PDFs available anytime. Study on any device, offline." },
+            {
+              t: "Concept-first teaching",
+              d: "Every topic is broken into the smallest teachable idea — no memorising, only understanding.",
+            },
+            {
+              t: "Personalised mentorship",
+              d: "Small batches so each student gets attention, targeted doubt-clearing and weekly progress checks.",
+            },
+            {
+              t: "Downloadable material",
+              d: "Chapter-wise, exam-oriented PDFs available anytime. Study on any device, offline.",
+            },
           ].map((f, i) => (
-            <div key={f.t} className="group rounded-2xl border border-border bg-card p-8 shadow-soft transition hover:-translate-y-1 hover:shadow-elegant">
+            <div
+              key={f.t}
+              className="group rounded-2xl border border-border bg-card p-8 shadow-soft transition hover:-translate-y-1 hover:shadow-elegant"
+            >
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground font-display text-lg font-bold">
                 {i + 1}
               </div>
@@ -144,10 +194,16 @@ function Home() {
             Get instant access to curated Class 10 study material and stay ahead of the syllabus.
           </p>
           <div className="relative mt-8 flex flex-wrap justify-center gap-3">
-            <Link to="/downloads" className="inline-flex items-center gap-2 rounded-full bg-background px-6 py-3 text-sm font-semibold text-primary shadow hover:opacity-90">
+            <Link
+              to="/downloads"
+              className="inline-flex items-center gap-2 rounded-full bg-background px-6 py-3 text-sm font-semibold text-primary shadow hover:opacity-90"
+            >
               <Download className="h-4 w-4" /> Download PDFs
             </Link>
-            <Link to="/about" className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/30 px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-foreground/10">
+            <Link
+              to="/about"
+              className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/30 px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-foreground/10"
+            >
               Learn more
             </Link>
           </div>
