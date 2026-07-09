@@ -1,10 +1,19 @@
-// Browser-compatible Neon queries via HTTP fetch
-// The @neondatabase/serverless package uses HTTP instead of TCP so it works in browsers.
+// Uses @neondatabase/serverless for browser-compatible HTTP queries to Neon DB
+import { neon } from "@neondatabase/serverless";
 
 export type Subject = { id: string; name: string; url: string };
 export type ClassData = { classNum: number; label: string; enabled: boolean; subjects: Subject[] };
 
 const DB_URL = import.meta.env.VITE_DATABASE_URL as string;
+
+function getSql() {
+  if (!DB_URL) return null;
+  try {
+    return neon(DB_URL);
+  } catch {
+    return null;
+  }
+}
 
 export const defaultClasses: ClassData[] = Array.from({ length: 12 }, (_, i) => {
   const n = i + 1;
@@ -16,43 +25,6 @@ export const defaultClasses: ClassData[] = Array.from({ length: 12 }, (_, i) => 
     subjects: [],
   };
 });
-
-// Neon serverless HTTP API endpoint derived from connection string
-function getNeonHttpEndpoint() {
-  try {
-    const url = new URL(DB_URL);
-    const host = url.hostname; // e.g. ep-aged-band-xxx.us-east-1.aws.neon.tech
-    const user = url.username;
-    const pass = url.password;
-    const db = url.pathname.replace("/", "");
-    return { host, user, pass, db };
-  } catch {
-    return null;
-  }
-}
-
-async function neonQuery(sql: string, params: unknown[] = []): Promise<Record<string, unknown>[]> {
-  const creds = getNeonHttpEndpoint();
-  if (!creds) return [];
-  const { host, user, pass, db } = creds;
-  const endpoint = `https://${host}/sql`;
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${pass}`,
-      "Neon-Connection-String": DB_URL,
-    },
-    body: JSON.stringify({ query: sql, params }),
-  });
-  if (!res.ok) {
-    // fallback to local storage on error
-    console.warn("Neon HTTP query failed", res.status);
-    return [];
-  }
-  const json = (await res.json()) as { rows: Record<string, unknown>[] };
-  return json.rows ?? [];
-}
 
 // --- Local storage cache ---
 const LS_KEY = "nxt-rank:classes";
@@ -74,16 +46,22 @@ function loadLocal(): ClassData[] | null {
 // --- Public API ---
 
 export async function loadClasses(): Promise<ClassData[]> {
+  const sql = getSql();
+  if (!sql) {
+    console.warn("No DATABASE_URL — using localStorage fallback");
+    return loadLocal() ?? defaultClasses;
+  }
+
   try {
-    const dbClasses = await neonQuery("SELECT * FROM classes ORDER BY class_num ASC");
-    const dbSubjects = await neonQuery("SELECT * FROM subjects");
+    const dbClasses = await sql`SELECT * FROM classes ORDER BY class_num ASC`;
+    const dbSubjects = await sql`SELECT * FROM subjects`;
 
     if (dbClasses.length === 0) {
       const cached = loadLocal();
       return cached ?? defaultClasses;
     }
 
-    const result = dbClasses.map((c) => ({
+    const result: ClassData[] = dbClasses.map((c) => ({
       classNum: c.class_num as number,
       label: c.label as string,
       enabled: c.enabled as boolean,
@@ -102,31 +80,39 @@ export async function loadClasses(): Promise<ClassData[]> {
 }
 
 export async function saveClasses({ data }: { data: ClassData[] }): Promise<void> {
-  // Save locally first for instant feedback
+  // Save locally first for instant UI feedback
   saveLocal(data);
+
+  const sql = getSql();
+  if (!sql) {
+    console.warn("No DATABASE_URL — data saved to localStorage only");
+    return;
+  }
 
   try {
     // Upsert each class
     for (const c of data) {
-      await neonQuery(
-        "INSERT INTO classes (class_num, label, enabled) VALUES ($1, $2, $3) ON CONFLICT (class_num) DO UPDATE SET label = EXCLUDED.label, enabled = EXCLUDED.enabled",
-        [c.classNum, c.label, c.enabled],
-      );
+      await sql`
+        INSERT INTO classes (class_num, label, enabled)
+        VALUES (${c.classNum}, ${c.label}, ${c.enabled})
+        ON CONFLICT (class_num) DO UPDATE
+          SET label = EXCLUDED.label, enabled = EXCLUDED.enabled
+      `;
     }
 
-    // Replace subjects
-    await neonQuery("DELETE FROM subjects", []);
+    // Replace all subjects atomically
+    await sql`DELETE FROM subjects`;
     for (const c of data) {
       for (const s of c.subjects) {
-        await neonQuery(
-          "INSERT INTO subjects (id, class_num, name, url) VALUES ($1, $2, $3, $4)",
-          [s.id, c.classNum, s.name, s.url],
-        );
+        await sql`
+          INSERT INTO subjects (id, class_num, name, url)
+          VALUES (${s.id}, ${c.classNum}, ${s.name}, ${s.url})
+        `;
       }
     }
   } catch (err) {
     console.error("DB error saving classes", err);
-    // Data already saved to localStorage, so UI stays consistent
+    // Data already in localStorage so UI is consistent
   }
 }
 
