@@ -1,7 +1,8 @@
 // Uses @neondatabase/serverless for browser-compatible HTTP queries to Neon DB
 import { neon } from "@neondatabase/serverless";
 
-export type Subject = { id: string; name: string; url: string };
+export type Chapter = { id: string; name: string; url: string };
+export type Subject = { id: string; name: string; url: string; chapters: Chapter[] };
 export type ClassData = { classNum: number; label: string; enabled: boolean; subjects: Subject[] };
 
 const DB_URL = import.meta.env.VITE_DATABASE_URL as string;
@@ -53,6 +54,9 @@ export async function loadClasses(): Promise<ClassData[]> {
   }
 
   try {
+    // Add the chapters column dynamically if it doesn't exist
+    await sql`ALTER TABLE subjects ADD COLUMN IF NOT EXISTS chapters JSONB DEFAULT '[]'::jsonb`.catch(() => {});
+
     const dbClasses = await sql`SELECT * FROM classes ORDER BY class_num ASC`;
     const dbSubjects = await sql`SELECT * FROM subjects`;
 
@@ -67,7 +71,12 @@ export async function loadClasses(): Promise<ClassData[]> {
       enabled: c.enabled as boolean,
       subjects: dbSubjects
         .filter((s) => s.class_num === c.class_num)
-        .map((s) => ({ id: s.id as string, name: s.name as string, url: s.url as string })),
+        .map((s) => ({ 
+          id: s.id as string, 
+          name: s.name as string, 
+          url: s.url as string,
+          chapters: typeof s.chapters === 'string' ? JSON.parse(s.chapters) : (s.chapters || [])
+        })),
     }));
 
     saveLocal(result);
@@ -90,6 +99,9 @@ export async function saveClasses({ data }: { data: ClassData[] }): Promise<void
   }
 
   try {
+    // Add the chapters column dynamically if it doesn't exist just in case
+    await sql`ALTER TABLE subjects ADD COLUMN IF NOT EXISTS chapters JSONB DEFAULT '[]'::jsonb`.catch(() => {});
+
     // Upsert each class
     for (const c of data) {
       await sql`
@@ -105,8 +117,8 @@ export async function saveClasses({ data }: { data: ClassData[] }): Promise<void
     for (const c of data) {
       for (const s of c.subjects) {
         await sql`
-          INSERT INTO subjects (id, class_num, name, url)
-          VALUES (${s.id}, ${c.classNum}, ${s.name}, ${s.url})
+          INSERT INTO subjects (id, class_num, name, url, chapters)
+          VALUES (${s.id}, ${c.classNum}, ${s.name}, ${s.url || ''}, ${JSON.stringify(s.chapters || [])}::jsonb)
         `;
       }
     }

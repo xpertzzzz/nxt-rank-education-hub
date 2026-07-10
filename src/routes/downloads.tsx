@@ -122,8 +122,32 @@ function Downloads() {
                     <p className="mt-1 text-xs text-muted-foreground">
                       Chapter-wise notes & practice
                     </p>
-                    <div className="mt-6">
-                      {hasLink ? (
+                    <div className="mt-6 flex flex-col gap-2">
+                      {s.chapters && s.chapters.length > 0 ? (
+                        s.chapters.map((ch, idx) => (
+                          <div key={ch.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-secondary/50 border border-border/50">
+                            <span className="text-sm font-medium truncate flex-1" title={ch.name || `Chapter ${idx + 1}`}>
+                              {ch.name || `Chapter ${idx + 1}`}
+                            </span>
+                            {ch.url ? (
+                              <a
+                                href={ch.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:opacity-90"
+                              >
+                                <Download className="h-3 w-3" />
+                                Download
+                              </a>
+                            ) : (
+                              <span className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-muted/40 px-3 py-1.5 text-xs font-semibold text-muted-foreground border border-dashed border-border">
+                                <Lock className="h-3 w-3" />
+                                Soon
+                              </span>
+                            )}
+                          </div>
+                        ))
+                      ) : s.url ? (
                         <a
                           href={s.url}
                           target="_blank"
@@ -139,7 +163,7 @@ function Downloads() {
                           className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-dashed border-border bg-muted/40 px-4 py-2.5 text-sm font-semibold text-muted-foreground"
                         >
                           <Lock className="h-4 w-4" />
-                          Link coming soon
+                          Material coming soon
                         </button>
                       )}
                     </div>

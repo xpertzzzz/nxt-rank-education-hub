@@ -155,12 +155,12 @@ function Panel({ onLogout }: { onLogout: () => void }) {
     );
   }
 
-  function addSubject(name: string, url: string) {
+  function addSubject(name: string) {
     const id = slugify(name);
     update(
       classes.map((c) =>
         c.classNum === activeClass
-          ? { ...c, subjects: [...c.subjects, { id, name: name.trim(), url: url.trim() }] }
+          ? { ...c, subjects: [...c.subjects, { id, name: name.trim(), url: "", chapters: [] }] }
           : c,
       ),
     );
@@ -304,71 +304,116 @@ function SubjectRow({
   onChange: (p: Partial<Subject>) => void;
   onDelete: () => void;
 }) {
+  const chapters = subject.chapters || [];
+
+  function addChapter() {
+    const newId = `ch-${Date.now()}`;
+    onChange({ chapters: [...chapters, { id: newId, name: "", url: "" }] });
+  }
+
+  function updateChapter(chId: string, patch: Partial<{ name: string; url: string }>) {
+    onChange({
+      chapters: chapters.map((c) => (c.id === chId ? { ...c, ...patch } : c)),
+    });
+  }
+
+  function removeChapter(chId: string) {
+    onChange({
+      chapters: chapters.filter((c) => c.id !== chId),
+    });
+  }
+
   return (
-    <div className="grid gap-3 rounded-xl border border-border bg-background p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] sm:items-center">
-      <input
-        value={subject.name}
-        onChange={(e) => onChange({ name: e.target.value })}
-        placeholder="Subject name"
-        className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/20"
-      />
-      <div className="flex min-w-0 items-center gap-2">
+    <div className="flex flex-col gap-4 rounded-xl border border-border bg-background p-4">
+      {/* Subject Header */}
+      <div className="flex items-center gap-3">
         <input
-          value={subject.url}
-          onChange={(e) => onChange({ url: e.target.value })}
-          placeholder="https://drive.google.com/..."
-          className="min-w-0 flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/20"
+          value={subject.name}
+          onChange={(e) => onChange({ name: e.target.value })}
+          placeholder="Subject name (e.g. Mathematics)"
+          className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/20 font-semibold"
         />
-        {subject.url && (
-          <a
-            href={subject.url}
-            target="_blank"
-            rel="noreferrer"
-            className="shrink-0 rounded-lg border border-border p-2 text-muted-foreground hover:text-primary"
-            title="Open link"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </a>
-        )}
+        <button
+          onClick={onDelete}
+          className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
+        >
+          <Trash2 className="h-3.5 w-3.5" /> Remove Subject
+        </button>
       </div>
-      <button
-        onClick={onDelete}
-        className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
-      >
-        <Trash2 className="h-3.5 w-3.5" /> Remove
-      </button>
+
+      {/* Chapters List */}
+      <div className="pl-4 sm:pl-8 space-y-3 border-l-2 border-border/50">
+        {chapters.map((ch, idx) => (
+          <div key={ch.id} className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold text-muted-foreground w-6">
+              #{idx + 1}
+            </span>
+            <input
+              value={ch.name}
+              onChange={(e) => updateChapter(ch.id, { name: e.target.value })}
+              placeholder="Chapter name"
+              className="flex-1 min-w-[120px] rounded-lg border border-input bg-background px-3 py-1.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/20"
+            />
+            <div className="flex flex-1 min-w-[200px] items-center gap-2">
+              <input
+                value={ch.url}
+                onChange={(e) => updateChapter(ch.id, { url: e.target.value })}
+                placeholder="Google Drive PDF link"
+                className="flex-1 rounded-lg border border-input bg-background px-3 py-1.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/20"
+              />
+              {ch.url && (
+                <a
+                  href={ch.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="shrink-0 rounded-lg border border-border p-1.5 text-muted-foreground hover:text-primary"
+                  title="Open link"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+            </div>
+            <button
+              onClick={() => removeChapter(ch.id)}
+              className="shrink-0 p-1.5 text-destructive hover:bg-destructive/10 rounded-lg"
+              title="Remove chapter"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
+
+        <button
+          onClick={addChapter}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:opacity-80 mt-1"
+        >
+          <Plus className="h-3.5 w-3.5" /> Add Chapter
+        </button>
+      </div>
     </div>
   );
 }
 
-function AddSubjectForm({ onAdd }: { onAdd: (name: string, url: string) => void }) {
+function AddSubjectForm({ onAdd }: { onAdd: (name: string) => void }) {
   const [name, setName] = useState("");
-  const [url, setUrl] = useState("");
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         if (!name.trim()) return;
-        onAdd(name, url);
+        onAdd(name);
         setName("");
-        setUrl("");
       }}
       className="mt-6 rounded-xl border border-dashed border-border bg-secondary/30 p-4"
     >
       <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Add new subject
       </div>
-      <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto]">
+      <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Subject name"
-          className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/20"
-        />
-        <input
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="Google Drive link"
+          placeholder="Subject name (e.g. Science)"
           className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/20"
         />
         <button
@@ -384,3 +429,4 @@ function AddSubjectForm({ onAdd }: { onAdd: (name: string, url: string) => void 
     </form>
   );
 }
+
