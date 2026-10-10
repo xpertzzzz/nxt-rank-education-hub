@@ -1,17 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
-  BookOpen,
   Download,
-  GraduationCap,
   Sparkles,
-  Trophy,
-  Users,
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { YoutubeLatest } from "@/components/youtube-latest";
-const logo = { url: "/nxtranklogo.png" };
+import { YoutubeHero } from "@/components/youtube-latest";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -28,7 +23,7 @@ function Home() {
         <div className="absolute -right-32 -top-32 -z-10 h-96 w-96 rounded-full bg-gold/20 blur-3xl" />
         <div className="absolute -left-32 top-40 -z-10 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
 
-        <div className="mx-auto grid max-w-7xl gap-14 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:gap-8 lg:px-8 lg:py-28">
+        <div className="mx-auto grid max-w-7xl gap-14 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:gap-8 lg:px-8 lg:py-28 items-center">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary backdrop-blur">
               <Sparkles className="h-3.5 w-3.5 text-gold" />
@@ -77,42 +72,8 @@ function Home() {
             </dl>
           </div>
 
-          <div className="relative">
-            <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-primary/10 to-gold/20 blur-2xl" />
-            <div className="relative rounded-[2rem] border border-border bg-card p-8 shadow-elegant sm:p-10">
-              <div className="flex items-center gap-4">
-                <img
-                  src={logo.url}
-                  alt="NXT Rank"
-                  className="h-16 w-16 rounded-full ring-2 ring-gold/40"
-                />
-                <div>
-                  <div className="font-display text-xl font-bold text-primary">
-                    NXT Rank Institute
-                  </div>
-                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Est. by Pruthwiraj Behera
-                  </div>
-                </div>
-              </div>
-              <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                {[
-                  { icon: BookOpen, t: "Curated notes", d: "Chapter-wise PDFs." },
-                  { icon: Users, t: "Expert faculty", d: "Trained mentors." },
-                  { icon: Trophy, t: "Rank focus", d: "Result-driven." },
-                  { icon: GraduationCap, t: "1–12 support", d: "Full journey." },
-                ].map((f) => (
-                  <div
-                    key={f.t}
-                    className="rounded-2xl border border-border/70 bg-secondary/40 p-4"
-                  >
-                    <f.icon className="h-5 w-5 text-gold" />
-                    <div className="mt-3 text-sm font-semibold text-foreground">{f.t}</div>
-                    <div className="text-xs text-muted-foreground">{f.d}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div>
+            <YoutubeHero />
           </div>
         </div>
       </section>
@@ -156,7 +117,6 @@ function Home() {
         </div>
       </section>
 
-      <YoutubeLatest />
 
       {/* CTA */}
       <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
