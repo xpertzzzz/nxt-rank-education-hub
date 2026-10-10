@@ -15,12 +15,6 @@ const faculty = [
     initials: "PB",
     featured: true,
   },
-  { name: "Faculty Member", role: "Senior Educator", subject: "Physical Science", initials: "PS" },
-  { name: "Faculty Member", role: "Senior Educator", subject: "Life Science", initials: "LS" },
-  { name: "Faculty Member", role: "Language Expert", subject: "English", initials: "EN" },
-  { name: "Faculty Member", role: "Language Expert", subject: "Odia", initials: "OD" },
-  { name: "Faculty Member", role: "Language Expert", subject: "Hindi & Sanskrit", initials: "HS" },
-  { name: "Faculty Member", role: "Senior Educator", subject: "SSC", initials: "SS" },
 ];
 
 function Faculty() {
@@ -45,11 +39,11 @@ function Faculty() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="flex justify-center">
           {faculty.map((f, i) => (
             <div
               key={i}
-              className={`group relative overflow-hidden rounded-3xl border p-8 shadow-soft transition hover:-translate-y-1 hover:shadow-elegant ${
+              className={`group relative overflow-hidden rounded-3xl border p-8 shadow-soft transition hover:-translate-y-1 hover:shadow-elegant w-full max-w-lg ${
                 f.featured
                   ? "border-gold/50 bg-gradient-to-br from-primary to-primary-glow text-primary-foreground"
                   : "border-border bg-card"
@@ -69,7 +63,7 @@ function Faculty() {
               </div>
               <div className="mt-6">
                 <h3
-                  className={`font-display text-xl font-bold ${f.featured ? "text-primary-foreground" : "text-primary"}`}
+                  className={`font-display text-2xl font-bold ${f.featured ? "text-primary-foreground" : "text-primary"}`}
                 >
                   {f.name}
                 </h3>
@@ -94,3 +88,4 @@ function Faculty() {
     </div>
   );
 }
+
