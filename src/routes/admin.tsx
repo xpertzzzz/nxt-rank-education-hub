@@ -1,11 +1,23 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { LogOut, Plus, Save, Trash2, ExternalLink, ShieldCheck, ArrowLeft } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  LogOut,
+  Plus,
+  Save,
+  Trash2,
+  ExternalLink,
+  ShieldCheck,
+  ArrowLeft,
+  Check,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
 import { isAuthed, login, logout } from "@/lib/auth";
 import {
   loadClasses,
   saveClasses,
-  slugify,
+  deleteSubjectFromDb,
+  createSubjectId,
   type ClassData,
   type Subject,
 } from "@/lib/subjects-store";
@@ -117,53 +129,146 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 
 function Panel({ onLogout }: { onLogout: () => void }) {
   const [classes, setClasses] = useState<ClassData[]>([]);
+  const [activeClass, setActiveClass] = useState(10);
+  const [saveStatus, setSaveStatus] = useState<"saved" | "unsaved" | "saving" | "error">("saved");
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const classesRef = useRef<ClassData[]>(classes);
+  classesRef.current = classes;
 
   useEffect(() => {
-    loadClasses().then(setClasses);
+    loadClasses().then((data) => {
+      setClasses(data);
+      classesRef.current = data;
+    });
   }, []);
-  const [activeClass, setActiveClass] = useState(10);
-  const [savedFlash, setSavedFlash] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
+  }, []);
 
   const current = classes.find((c) => c.classNum === activeClass);
   if (!current) return <div className="p-8">Loading classes...</div>;
 
-  async function update(next: ClassData[]) {
-    setClasses(next);
-    await saveClasses({ data: next });
-    setSavedFlash(true);
-    setTimeout(() => setSavedFlash(false), 1500);
+  // Immediate save to DB
+  async function saveImmediate(dataToSave: ClassData[]) {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    setSaveStatus("saving");
+    try {
+      await saveClasses({ data: dataToSave });
+      setSaveStatus("saved");
+    } catch (err) {
+      console.error("Save error:", err);
+      setSaveStatus("error");
+    }
+  }
+
+  // Debounced save for text inputs (800ms)
+  function scheduleSave(dataToSave: ClassData[]) {
+    setSaveStatus("unsaved");
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(async () => {
+      setSaveStatus("saving");
+      try {
+        await saveClasses({ data: dataToSave });
+        setSaveStatus("saved");
+      } catch (err) {
+        console.error("Save error:", err);
+        setSaveStatus("error");
+      }
+    }, 800);
   }
 
   function updateSubject(subjectId: string, patch: Partial<Subject>) {
-    update(
-      classes.map((c) =>
-        c.classNum === activeClass
-          ? { ...c, subjects: c.subjects.map((s) => (s.id === subjectId ? { ...s, ...patch } : s)) }
-          : c,
-      ),
+    const next = classesRef.current.map((c) =>
+      c.classNum === activeClass
+        ? { ...c, subjects: c.subjects.map((s) => (s.id === subjectId ? { ...s, ...patch } : s)) }
+        : c,
     );
+    setClasses(next);
+    classesRef.current = next;
+    scheduleSave(next);
   }
 
-  function deleteSubject(subjectId: string) {
-    if (!confirm("Delete this subject?")) return;
-    update(
-      classes.map((c) =>
-        c.classNum === activeClass
-          ? { ...c, subjects: c.subjects.filter((s) => s.id !== subjectId) }
-          : c,
-      ),
+  async function deleteSubject(subjectId: string) {
+    if (!confirm("Are you sure you want to delete this subject?")) return;
+    const next = classesRef.current.map((c) =>
+      c.classNum === activeClass
+        ? { ...c, subjects: c.subjects.filter((s) => s.id !== subjectId) }
+        : c,
     );
+    setClasses(next);
+    classesRef.current = next;
+    // Explicitly delete this specific subject from DB so nothing else is touched
+    await deleteSubjectFromDb(subjectId);
+    await saveImmediate(next);
   }
 
-  function addSubject(name: string) {
-    const id = slugify(name);
-    update(
-      classes.map((c) =>
-        c.classNum === activeClass
-          ? { ...c, subjects: [...c.subjects, { id, name: name.trim(), url: "", chapters: [] }] }
-          : c,
-      ),
+  async function addSubject(name: string) {
+    const id = createSubjectId(activeClass, name);
+    const next = classesRef.current.map((c) =>
+      c.classNum === activeClass
+        ? { ...c, subjects: [...c.subjects, { id, name: name.trim(), url: "", chapters: [] }] }
+        : c,
     );
+    setClasses(next);
+    classesRef.current = next;
+    await saveImmediate(next);
+  }
+
+  async function toggleClassEnabled(checked: boolean) {
+    const next = classesRef.current.map((c) =>
+      c.classNum === activeClass ? { ...c, enabled: checked } : c,
+    );
+    setClasses(next);
+    classesRef.current = next;
+    await saveImmediate(next);
+  }
+
+  function handleAddChapter(subjectId: string) {
+    const newId = `ch-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const sub = current?.subjects.find((s) => s.id === subjectId);
+    const existingChapters = sub?.chapters || [];
+    const next = classesRef.current.map((c) =>
+      c.classNum === activeClass
+        ? {
+            ...c,
+            subjects: c.subjects.map((s) =>
+              s.id === subjectId
+                ? { ...s, chapters: [...existingChapters, { id: newId, name: "", url: "" }] }
+                : s,
+            ),
+          }
+        : c,
+    );
+    setClasses(next);
+    classesRef.current = next;
+    saveImmediate(next);
+  }
+
+  function handleRemoveChapter(subjectId: string, chId: string) {
+    const sub = current?.subjects.find((s) => s.id === subjectId);
+    const existingChapters = sub?.chapters || [];
+    const nextChapters = existingChapters.filter((c) => c.id !== chId);
+    const next = classesRef.current.map((c) =>
+      c.classNum === activeClass
+        ? {
+            ...c,
+            subjects: c.subjects.map((s) =>
+              s.id === subjectId ? { ...s, chapters: nextChapters } : s,
+            ),
+          }
+        : c,
+    );
+    setClasses(next);
+    classesRef.current = next;
+    saveImmediate(next);
   }
 
   return (
@@ -209,14 +314,37 @@ function Panel({ onLogout }: { onLogout: () => void }) {
               Manage study material
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Add, edit or remove subjects and Drive links. Changes publish instantly.
+              Add, edit or remove subjects and Drive links. Changes publish safely to database.
             </p>
           </div>
-          {savedFlash && (
-            <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-              Saved
-            </span>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {saveStatus === "saving" && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary animate-pulse">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving...
+              </span>
+            )}
+            {saveStatus === "saved" && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                <Check className="h-3.5 w-3.5" /> All saved
+              </span>
+            )}
+            {saveStatus === "unsaved" && (
+              <button
+                onClick={() => saveImmediate(classesRef.current)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-3 py-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 transition"
+              >
+                <Save className="h-3.5 w-3.5" /> Save changes
+              </button>
+            )}
+            {saveStatus === "error" && (
+              <button
+                onClick={() => saveImmediate(classesRef.current)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-destructive/15 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/25 transition"
+              >
+                <AlertCircle className="h-3.5 w-3.5" /> Save failed (Retry)
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Class selector */}
@@ -244,17 +372,11 @@ function Panel({ onLogout }: { onLogout: () => void }) {
               </button>
             ))}
           </div>
-          <label className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+          <label className="mt-4 flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
             <input
               type="checkbox"
               checked={current.enabled}
-              onChange={(e) =>
-                update(
-                  classes.map((c) =>
-                    c.classNum === activeClass ? { ...c, enabled: e.target.checked } : c,
-                  ),
-                )
-              }
+              onChange={(e) => toggleClassEnabled(e.target.checked)}
               className="h-4 w-4 rounded border-border"
             />
             Publish Class {activeClass} on the website
@@ -279,6 +401,8 @@ function Panel({ onLogout }: { onLogout: () => void }) {
                 subject={s}
                 onChange={(p) => updateSubject(s.id, p)}
                 onDelete={() => deleteSubject(s.id)}
+                onAddChapter={() => handleAddChapter(s.id)}
+                onRemoveChapter={(chId) => handleRemoveChapter(s.id, chId)}
               />
             ))}
             {current.subjects.length === 0 && (
@@ -299,27 +423,20 @@ function SubjectRow({
   subject,
   onChange,
   onDelete,
+  onAddChapter,
+  onRemoveChapter,
 }: {
   subject: Subject;
   onChange: (p: Partial<Subject>) => void;
   onDelete: () => void;
+  onAddChapter: () => void;
+  onRemoveChapter: (chId: string) => void;
 }) {
   const chapters = subject.chapters || [];
-
-  function addChapter() {
-    const newId = `ch-${Date.now()}`;
-    onChange({ chapters: [...chapters, { id: newId, name: "", url: "" }] });
-  }
 
   function updateChapter(chId: string, patch: Partial<{ name: string; url: string }>) {
     onChange({
       chapters: chapters.map((c) => (c.id === chId ? { ...c, ...patch } : c)),
-    });
-  }
-
-  function removeChapter(chId: string) {
-    onChange({
-      chapters: chapters.filter((c) => c.id !== chId),
     });
   }
 
@@ -374,7 +491,7 @@ function SubjectRow({
               )}
             </div>
             <button
-              onClick={() => removeChapter(ch.id)}
+              onClick={() => onRemoveChapter(ch.id)}
               className="shrink-0 p-1.5 text-destructive hover:bg-destructive/10 rounded-lg"
               title="Remove chapter"
             >
@@ -384,7 +501,7 @@ function SubjectRow({
         ))}
 
         <button
-          onClick={addChapter}
+          onClick={onAddChapter}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:opacity-80 mt-1"
         >
           <Plus className="h-3.5 w-3.5" /> Add Chapter
@@ -429,4 +546,5 @@ function AddSubjectForm({ onAdd }: { onAdd: (name: string) => void }) {
     </form>
   );
 }
+
 

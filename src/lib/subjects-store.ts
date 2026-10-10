@@ -60,24 +60,43 @@ export async function loadClasses(): Promise<ClassData[]> {
     const dbClasses = await sql`SELECT * FROM classes ORDER BY class_num ASC`;
     const dbSubjects = await sql`SELECT * FROM subjects`;
 
-    if (dbClasses.length === 0) {
+    if (dbClasses.length === 0 && dbSubjects.length === 0) {
       const cached = loadLocal();
       return cached ?? defaultClasses;
     }
 
-    const result: ClassData[] = dbClasses.map((c) => ({
-      classNum: c.class_num as number,
-      label: c.label as string,
-      enabled: c.enabled as boolean,
-      subjects: dbSubjects
-        .filter((s) => s.class_num === c.class_num)
-        .map((s) => ({ 
-          id: s.id as string, 
-          name: s.name as string, 
-          url: s.url as string,
-          chapters: typeof s.chapters === 'string' ? JSON.parse(s.chapters) : (s.chapters || [])
-        })),
-    }));
+    const classesMap = new Map<number, { class_num: number; label: string; enabled: boolean }>();
+    for (const c of dbClasses) {
+      classesMap.set(c.class_num as number, c as { class_num: number; label: string; enabled: boolean });
+    }
+
+    const result: ClassData[] = defaultClasses.map((def) => {
+      const c = classesMap.get(def.classNum);
+      const classNum = def.classNum;
+      const label = c ? (c.label as string) : def.label;
+      const enabled = c ? (c.enabled as boolean) : def.enabled;
+      const subjects = dbSubjects
+        .filter((s) => s.class_num === classNum)
+        .map((s) => {
+          let chapters: Chapter[] = [];
+          if (Array.isArray(s.chapters)) {
+            chapters = s.chapters;
+          } else if (typeof s.chapters === "string") {
+            try {
+              chapters = JSON.parse(s.chapters);
+            } catch {
+              chapters = [];
+            }
+          }
+          return {
+            id: s.id as string,
+            name: s.name as string,
+            url: (s.url as string) || "",
+            chapters,
+          };
+        });
+      return { classNum, label, enabled, subjects };
+    });
 
     saveLocal(result);
     return result;
@@ -85,6 +104,16 @@ export async function loadClasses(): Promise<ClassData[]> {
     console.error("DB error loading classes", err);
     const cached = loadLocal();
     return cached ?? defaultClasses;
+  }
+}
+
+export async function deleteSubjectFromDb(subjectId: string): Promise<void> {
+  const sql = getSql();
+  if (!sql) return;
+  try {
+    await sql`DELETE FROM subjects WHERE id = ${subjectId}`;
+  } catch (err) {
+    console.error("DB error deleting subject", err);
   }
 }
 
@@ -112,19 +141,24 @@ export async function saveClasses({ data }: { data: ClassData[] }): Promise<void
       `;
     }
 
-    // Replace all subjects atomically
-    await sql`DELETE FROM subjects`;
+    // Upsert subjects safely WITHOUT deleting the whole table!
     for (const c of data) {
       for (const s of c.subjects) {
+        const chaptersJson = JSON.stringify(s.chapters || []);
         await sql`
           INSERT INTO subjects (id, class_num, name, url, chapters)
-          VALUES (${s.id}, ${c.classNum}, ${s.name}, ${s.url || ''}, ${JSON.stringify(s.chapters || [])}::jsonb)
+          VALUES (${s.id}, ${c.classNum}, ${s.name}, ${s.url || ''}, ${chaptersJson}::jsonb)
+          ON CONFLICT (id) DO UPDATE
+            SET class_num = EXCLUDED.class_num,
+                name = EXCLUDED.name,
+                url = EXCLUDED.url,
+                chapters = EXCLUDED.chapters
         `;
       }
     }
   } catch (err) {
     console.error("DB error saving classes", err);
-    // Data already in localStorage so UI is consistent
+    throw err;
   }
 }
 
@@ -136,4 +170,9 @@ export function slugify(s: string) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "") || `subject-${Date.now()}`
   );
+}
+
+export function createSubjectId(classNum: number, name: string): string {
+  const slug = slugify(name);
+  return `c${classNum}-${slug}-${Date.now().toString(36)}`;
 }
