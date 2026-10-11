@@ -1,20 +1,32 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Download, FileText, Lock } from "lucide-react";
+import { Download, FileText, Lock, Loader2 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { loadClasses, type ClassData } from "@/lib/subjects-store";
+import {
+  loadClasses,
+  formatDownloadUrl,
+  defaultClasses,
+  type ClassData,
+} from "@/lib/subjects-store";
 
 export const Route = createFileRoute("/downloads")({
   component: Downloads,
 });
 
 function Downloads() {
-  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [classes, setClasses] = useState<ClassData[]>(defaultClasses);
   const [activeClass, setActiveClass] = useState(10);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadClasses().then(setClasses);
+    loadClasses()
+      .then((data) => {
+        setClasses(data);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   const current = classes.find((c) => c.classNum === activeClass);
@@ -40,8 +52,13 @@ function Downloads() {
 
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-3xl border border-border bg-card p-4 shadow-soft sm:p-6">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Select a class
+          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <span>Select a class</span>
+            {loading && (
+              <span className="inline-flex items-center gap-1.5 text-xs text-primary font-normal lowercase tracking-normal">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> syncing materials...
+              </span>
+            )}
           </div>
           <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-12">
             {classes.map((c) => {
@@ -52,7 +69,7 @@ function Downloads() {
                   key={c.classNum}
                   onClick={() => enabled && setActiveClass(c.classNum)}
                   disabled={!enabled}
-                  className={`relative rounded-2xl px-2 py-4 text-center transition ${
+                  className={`relative rounded-2xl px-2 py-4 text-center transition cursor-pointer ${
                     active
                       ? "bg-primary text-primary-foreground shadow-elegant"
                       : enabled
@@ -102,7 +119,6 @@ function Downloads() {
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {current.subjects.map((s) => {
-                const hasLink = Boolean(s.url);
                 return (
                   <div
                     key={s.id}
@@ -125,16 +141,22 @@ function Downloads() {
                     <div className="mt-6 flex flex-col gap-2">
                       {s.chapters && s.chapters.length > 0 ? (
                         s.chapters.map((ch, idx) => (
-                          <div key={ch.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-secondary/50 border border-border/50">
-                            <span className="text-sm font-medium truncate flex-1" title={ch.name || `Chapter ${idx + 1}`}>
+                          <div
+                            key={ch.id}
+                            className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-secondary/50 border border-border/50"
+                          >
+                            <span
+                              className="text-sm font-medium truncate flex-1 text-foreground"
+                              title={ch.name || `Chapter ${idx + 1}`}
+                            >
                               {ch.name || `Chapter ${idx + 1}`}
                             </span>
                             {ch.url ? (
                               <a
-                                href={ch.url}
+                                href={formatDownloadUrl(ch.url)}
                                 target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:opacity-90"
+                                rel="noopener noreferrer"
+                                className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground transition hover:opacity-90 shadow-2xs"
                               >
                                 <Download className="h-3 w-3" />
                                 Download
@@ -149,10 +171,10 @@ function Downloads() {
                         ))
                       ) : s.url ? (
                         <a
-                          href={s.url}
+                          href={formatDownloadUrl(s.url)}
                           target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+                          rel="noopener noreferrer"
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 shadow-sm"
                         >
                           <Download className="h-4 w-4" />
                           Download PDF
@@ -172,7 +194,13 @@ function Downloads() {
               })}
               {current.subjects.length === 0 && (
                 <div className="col-span-full rounded-2xl border border-dashed border-border bg-secondary/30 p-10 text-center text-sm text-muted-foreground">
-                  No subjects added yet.
+                  {loading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" /> Loading subjects...
+                    </div>
+                  ) : (
+                    "No subjects added yet."
+                  )}
                 </div>
               )}
             </div>

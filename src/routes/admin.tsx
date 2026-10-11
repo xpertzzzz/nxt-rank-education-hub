@@ -20,7 +20,7 @@ import { isAuthed, login, logout } from "@/lib/auth";
 import {
   loadClasses,
   saveClasses,
-  deleteSubjectFromDb,
+  formatDownloadUrl,
   createSubjectId,
   type ClassData,
   type Subject,
@@ -216,12 +216,10 @@ function Panel({ onLogout }: { onLogout: () => void }) {
     setHasUnsavedChanges(true);
   }
 
-  async function deleteSubject(subjectId: string, subjectName: string) {
-    if (!confirm(`Are you sure you want to delete "${subjectName || "this subject"}"? Remember to click Save Changes to publish.`)) {
+  function deleteSubject(subjectId: string, subjectName: string) {
+    if (!confirm(`Are you sure you want to delete "${subjectName || "this subject"}"? Click "Save Changes" to publish this change.`)) {
       return;
     }
-    // Delete explicitly from database
-    await deleteSubjectFromDb(subjectId);
     setClasses((prev) =>
       prev.map((c) =>
         c.classNum === activeClass
@@ -699,6 +697,34 @@ function SubjectCard({
         </div>
       </div>
 
+      {/* Optional Full Subject PDF Link (for single file materials) */}
+      <div className="mt-4 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5">
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+          <label className="text-xs font-semibold text-slate-700">
+            Main Subject PDF Link <span className="text-slate-400 font-normal">(optional, if uploading single book/syllabus)</span>
+          </label>
+          {subject.url && (
+            <a
+              href={formatDownloadUrl(subject.url)}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
+              title="Test Google Drive link"
+            >
+              <ExternalLink className="h-3 w-3" /> Test Link
+            </a>
+          )}
+        </div>
+        <div className="relative">
+          <input
+            value={subject.url || ""}
+            onChange={(e) => onUpdateSubject({ url: e.target.value })}
+            placeholder="Paste Google Drive link for full textbook (optional)"
+            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs sm:text-sm outline-none focus:border-primary text-slate-800 placeholder:text-slate-400 shadow-2xs"
+          />
+        </div>
+      </div>
+
       {/* Chapters List */}
       <div className="mt-4 space-y-3">
         <div className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center justify-between">
@@ -744,7 +770,7 @@ function SubjectCard({
 
               {ch.url && (
                 <a
-                  href={ch.url}
+                  href={formatDownloadUrl(ch.url)}
                   target="_blank"
                   rel="noreferrer"
                   className="shrink-0 rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:text-primary hover:border-primary transition shadow-2xs"
@@ -767,7 +793,7 @@ function SubjectCard({
 
         {chapters.length === 0 && (
           <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center text-xs text-slate-500">
-            No chapters added yet for {subject.name || "this subject"}. Click below to add Chapter 1.
+            No chapter-wise notes added yet. Click below to add Chapter 1, or use the Main Subject PDF link above.
           </div>
         )}
 
