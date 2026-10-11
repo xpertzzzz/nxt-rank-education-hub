@@ -141,18 +141,14 @@ export async function saveClasses({ data }: { data: ClassData[] }): Promise<void
       `;
     }
 
-    // Upsert subjects safely WITHOUT deleting the whole table!
+    // Upsert subjects safely without depending on a unique constraint on id
     for (const c of data) {
       for (const s of c.subjects) {
         const chaptersJson = JSON.stringify(s.chapters || []);
+        await sql`DELETE FROM subjects WHERE id = ${s.id}`.catch(() => {});
         await sql`
           INSERT INTO subjects (id, class_num, name, url, chapters)
           VALUES (${s.id}, ${c.classNum}, ${s.name}, ${s.url || ''}, ${chaptersJson}::jsonb)
-          ON CONFLICT (id) DO UPDATE
-            SET class_num = EXCLUDED.class_num,
-                name = EXCLUDED.name,
-                url = EXCLUDED.url,
-                chapters = EXCLUDED.chapters
         `;
       }
     }
